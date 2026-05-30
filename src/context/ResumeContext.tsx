@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { generateLatex } from "@/utils/latexGenerator";
 
 export interface CustomLink {
   id: string;
@@ -94,6 +95,8 @@ interface ResumeContextType {
   addCustomLink: () => void;
   updateCustomLink: (id: string, info: Partial<CustomLink>) => void;
   removeCustomLink: (id: string) => void;
+  cachedPdfUrl: string | null;
+  isPdfCompiling: boolean;
 }
 
 const defaultPersonalInfo: PersonalInfo = {
@@ -102,8 +105,8 @@ const defaultPersonalInfo: PersonalInfo = {
   email: "rahul.sharma@example.com",
   phone: "+91 98765 43210",
   address: "Bengaluru, Karnataka",
-  linkedin: "linkedin.com/in/rahulsharma",
-  github: "github.com/rahulsharma",
+  linkedin: "#",
+  github: "#",
   objective: "A highly motivated software engineer looking to build scalable web applications. Passionate about solving complex problems and learning new technologies.",
   title: "Software Engineer",
 };
@@ -138,7 +141,7 @@ export const templateResumeData: ResumeData = {
       startDate: "Jan 2024",
       endDate: "Feb 2024",
       description: "Built a full-stack application that generates ATS-friendly resumes.\nIntegrated Overleaf API for direct LaTeX PDF compilation.",
-      url: "github.com/rahulsharma/resume-builder"
+      url: ""
     }
   ],
   certifications: [
@@ -157,7 +160,7 @@ export const templateResumeData: ResumeData = {
     { id: uuidv4(), name: "Git & CI/CD" },
   ],
   customLinks: [
-    { id: uuidv4(), name: "Portfolio", url: "https://rahulsharma.dev" }
+    { id: uuidv4(), name: "Portfolio", url: "#" }
   ]
 };
 
@@ -168,8 +171,8 @@ export const emptyResumeData: ResumeData = {
     email: "",
     phone: "",
     address: "",
-    linkedin: "",
-    github: "",
+    linkedin: "#",
+    github: "#",
     objective: "",
     title: "",
   },
@@ -186,6 +189,10 @@ const ResumeContext = createContext<ResumeContextType | undefined>(undefined);
 export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [resumeData, setResumeData] = useState<ResumeData>(emptyResumeData);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [cachedPdfUrl, setCachedPdfUrl] = useState<string | null>(null);
+  const [isPdfCompiling, setIsPdfCompiling] = useState(false);
+  const [lastCompiledLatex, setLastCompiledLatex] = useState<string | null>(null);
+  const pdfUrlRef = React.useRef<string | null>(null);
 
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -193,6 +200,61 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       document.documentElement.classList.add('dark');
     }
   }, []);
+
+  // Background compilation and pre-fetching effect
+  useEffect(() => {
+    const latexCode = generateLatex(resumeData);
+    
+    // Invalidate cache immediately if content changed
+    if (latexCode !== lastCompiledLatex) {
+      setCachedPdfUrl(null);
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        if (!latexCode || latexCode.trim() === '' || latexCode === lastCompiledLatex) return;
+
+        setIsPdfCompiling(true);
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+        
+        // 1. Trigger/Wait for compilation on backend
+        const preCompileRes = await fetch(`${backendUrl}/api/resume/pre-compile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latexCode })
+        });
+
+        if (preCompileRes.ok) {
+          // 2. Pre-fetch the PDF blob immediately
+          const downloadRes = await fetch(`${backendUrl}/api/resume/download-pdf`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latexCode })
+          });
+
+          if (downloadRes.ok) {
+            const blob = await downloadRes.blob();
+            const url = URL.createObjectURL(blob);
+            
+            if (pdfUrlRef.current) {
+              URL.revokeObjectURL(pdfUrlRef.current);
+            }
+            pdfUrlRef.current = url;
+            setCachedPdfUrl(url);
+            setLastCompiledLatex(latexCode);
+          }
+        }
+      } catch (error) {
+        console.error("Background PDF pre-fetch failed:", error);
+      } finally {
+        setIsPdfCompiling(false);
+      }
+    }, 2000); // 2 second debounce to avoid overloading
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [resumeData, lastCompiledLatex]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -383,7 +445,9 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         removeSkill,
         addCustomLink,
         updateCustomLink,
-        removeCustomLink
+        removeCustomLink,
+        cachedPdfUrl,
+        isPdfCompiling
       }}
     >
       {children}

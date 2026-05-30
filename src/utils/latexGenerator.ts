@@ -21,6 +21,7 @@ export const generateLatex = (data: ResumeData): string => {
   const ensureProtocol = (url: string) => {
     if (!url) return "";
     const trimmed = url.trim();
+    if (trimmed === "#") return "#";
     if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("mailto:")) {
       return trimmed;
     }
@@ -48,6 +49,14 @@ export const generateLatex = (data: ResumeData): string => {
 \\usepackage{hyperref}
 \\usepackage{fancyhdr}
 \\usepackage[english]{babel}
+
+\\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdfnewwindow=true,
+}
 
 \\pagestyle{fancy}
 \\fancyhf{}
