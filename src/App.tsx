@@ -16,11 +16,15 @@ export default function App() {
   const { isDarkMode, toggleDarkMode, resumeData, loadResumeData } = useResume();
   const { user, logout, loading: authLoading } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchResume = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsFetching(false);
+        return;
+      }
       setIsFetching(true);
       try {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/resume`, {
@@ -36,6 +40,7 @@ export default function App() {
         console.error('Failed to fetch resume', err);
       } finally {
         setIsFetching(false);
+        setIsLoaded(true);
       }
     };
     fetchResume();
@@ -43,7 +48,7 @@ export default function App() {
 
   // Debounced Auto-save to MongoDB
   useEffect(() => {
-    if (!user || isFetching) return;
+    if (!user || !isLoaded || isFetching) return;
 
     const timer = setTimeout(async () => {
       setIsSaving(true);
@@ -64,7 +69,7 @@ export default function App() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [resumeData, user, isFetching]);
+  }, [resumeData, user, isLoaded, isFetching]);
 
   if (authLoading || isFetching) {
     return (
