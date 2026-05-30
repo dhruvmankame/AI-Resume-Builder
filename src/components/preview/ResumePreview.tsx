@@ -9,6 +9,7 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
   
   const [pdfUrl, setPdfUrl] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [key, setKey] = useState(0);
 
   // Debounce the compilation to avoid spamming the free API
@@ -21,6 +22,28 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
     return () => clearTimeout(handler);
   }, [latexCode]);
 
+  const handleDownloadPdf = async () => {
+    if (!pdfUrl) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "resume.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download PDF directly.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col h-full bg-gray-100 dark:bg-gray-900 transition-colors">
       <div className="w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
@@ -30,14 +53,14 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
           {isCompiling && <Loader2 className="w-3 h-3 ml-2 animate-spin text-blue-500" />}
         </h2>
         <div className="flex gap-4">
-          <a 
-            href={pdfUrl}
-            download="resume.pdf"
-            className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+          <button 
+            onClick={handleDownloadPdf}
+            disabled={isDownloading || !pdfUrl}
+            className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
             title="Download PDF"
           >
-            <Download className="w-5 h-5" />
-          </a>
+            {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+          </button>
 
           <form action="https://www.overleaf.com/docs" method="post" target="_blank" className="flex items-center">
             <input type="hidden" name="snip" value={latexCode} />
@@ -52,18 +75,18 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
         </div>
       </div>
       
-      <div className="flex-1 p-4 sm:p-8 relative overflow-y-auto" ref={ref}>
+      <div className="flex-1 relative overflow-hidden" ref={ref}>
         {pdfUrl ? (
-          <div className="h-full max-w-[210mm] mx-auto bg-white shadow-2xl rounded-sm">
+          <div className="w-full h-full bg-white">
             <iframe 
               key={key}
-              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-              className="w-full h-full border-0 rounded-sm"
+              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              className="w-full h-full border-0"
               title="Resume PDF Preview"
             />
           </div>
         ) : (
-          <div className="w-full h-full max-w-[210mm] mx-auto flex flex-col items-center justify-center bg-white dark:bg-gray-800 shadow-2xl rounded-sm border border-gray-200 dark:border-gray-700">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
              <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium animate-pulse">Compiling document...</p>
           </div>

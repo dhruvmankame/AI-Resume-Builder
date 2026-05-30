@@ -8,14 +8,13 @@ import ProjectsForm from "@/components/form/ProjectsForm";
 import CertificationsForm from "@/components/form/CertificationsForm";
 import SkillsForm from "@/components/form/SkillsForm";
 import ResumePreview from "@/components/preview/ResumePreview";
-import LoginModal from "@/components/auth/LoginModal";
-import { Moon, Sun, LogIn, LogOut, Save, Loader2 } from "lucide-react";
+import AuthPage from "@/components/auth/AuthPage";
+import { Moon, Sun, LogOut, Save, Loader2 } from "lucide-react";
 
 export default function App() {
   const componentRef = useRef<HTMLDivElement>(null);
   const { isDarkMode, toggleDarkMode, resumeData, loadResumeData } = useResume();
-  const { user, logout } = useAuth();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { user, logout, loading: authLoading } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
 
@@ -43,8 +42,6 @@ export default function App() {
   }, [user]);
 
   const handleSave = async () => {
-    if (!user) return setIsLoginModalOpen(true);
-    
     setIsSaving(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/resume`, {
@@ -65,10 +62,20 @@ export default function App() {
     }
   };
 
+  if (authLoading || isFetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900 transition-colors">
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
-      
       {/* Left Panel: Forms */}
       <div className="w-full md:w-1/2 lg:w-[45%] h-screen overflow-y-auto p-6 lg:p-10 border-r border-gray-200 dark:border-gray-800 custom-scrollbar relative">
         
@@ -91,21 +98,12 @@ export default function App() {
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save
             </button>
-            {user ? (
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium"
-              >
-                <LogOut className="w-4 h-4" /> Logout
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium"
-              >
-                <LogIn className="w-4 h-4" /> Login
-              </button>
-            )}
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
           </div>
         </div>
 
