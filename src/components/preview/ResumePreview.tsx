@@ -1,6 +1,6 @@
 import { forwardRef, useState, useEffect } from "react";
 import { useResume } from "@/context/ResumeContext";
-import { FileCode2, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { FileCode2, ExternalLink, Loader2, Download } from "lucide-react";
 import { generateLatex } from "@/utils/latexGenerator";
 
 const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
@@ -22,53 +22,50 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
   }, [latexCode]);
 
   return (
-    <div className="w-full flex flex-col h-full bg-gray-200 dark:bg-gray-900 transition-colors">
-      <div className="sticky top-0 z-10 w-full bg-gray-800 dark:bg-gray-950 text-white p-4 shadow-md flex justify-between items-center px-4 sm:px-8">
-        <h2 className="font-semibold text-lg flex items-center gap-2">
-          <FileCode2 className="w-5 h-5 text-blue-400" />
-          <span className="hidden sm:inline">LaTeX PDF Preview</span>
-          <span className="sm:hidden">Preview</span>
-          {isCompiling && <Loader2 className="w-4 h-4 ml-1 animate-spin text-gray-400" />}
+    <div className="w-full flex flex-col h-full bg-gray-100 dark:bg-gray-900 transition-colors">
+      <div className="w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
+        <h2 className="font-semibold text-sm flex items-center gap-2 text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <FileCode2 className="w-4 h-4" />
+          Preview
+          {isCompiling && <Loader2 className="w-3 h-3 ml-2 animate-spin text-blue-500" />}
         </h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => {
-              setIsCompiling(true);
-              setPdfUrl(`https://latexonline.cc/compile?text=${encodeURIComponent(latexCode)}`);
-              setKey(k => k + 1);
-              setTimeout(() => setIsCompiling(false), 500);
-            }}
-            className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md transition-colors font-medium shadow-sm text-xs sm:text-sm"
-            title="Force refresh the PDF preview"
+        <div className="flex gap-4">
+          <a 
+            href={pdfUrl}
+            download="resume.pdf"
+            className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+            title="Download PDF"
           >
-            <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
-          </button>
-          
-          <form action="https://www.overleaf.com/docs" method="post" target="_blank">
+            <Download className="w-5 h-5" />
+          </a>
+
+          <form action="https://www.overleaf.com/docs" method="post" target="_blank" className="flex items-center">
             <input type="hidden" name="snip" value={latexCode} />
             <button 
               type="submit"
-              className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md transition-colors font-medium shadow-sm text-xs sm:text-sm"
+              className="text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
               title="Open and edit directly in Overleaf"
             >
-              <ExternalLink className="w-4 h-4" /> <span className="hidden sm:inline">Overleaf</span>
+              <ExternalLink className="w-5 h-5" />
             </button>
           </form>
         </div>
       </div>
       
-      <div className="flex-1 p-2 sm:p-6 lg:p-8 relative" ref={ref}>
+      <div className="flex-1 p-4 sm:p-8 relative overflow-y-auto" ref={ref}>
         {pdfUrl ? (
-          <iframe 
-            key={key}
-            src={pdfUrl} 
-            className="w-full h-full rounded-md shadow-2xl border-0 bg-white"
-            title="Resume PDF Preview"
-          />
+          <div className="h-full max-w-[210mm] mx-auto bg-white shadow-2xl rounded-sm">
+            <iframe 
+              key={key}
+              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+              className="w-full h-full border-0 rounded-sm"
+              title="Resume PDF Preview"
+            />
+          </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md shadow-xl">
-             <Loader2 className="w-8 h-8 animate-spin text-gray-500 mb-4" />
-             <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Compiling LaTeX document...</p>
+          <div className="w-full h-full max-w-[210mm] mx-auto flex flex-col items-center justify-center bg-white dark:bg-gray-800 shadow-2xl rounded-sm border border-gray-200 dark:border-gray-700">
+             <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+             <p className="text-gray-500 dark:text-gray-400 text-sm font-medium animate-pulse">Compiling document...</p>
           </div>
         )}
       </div>

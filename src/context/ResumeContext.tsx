@@ -37,6 +37,23 @@ export interface Experience {
   description: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  technologies: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  url: string;
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -46,6 +63,8 @@ export interface ResumeData {
   personalInfo: PersonalInfo;
   education: Education[];
   experience: Experience[];
+  projects: Project[];
+  certifications: Certification[];
   skills: Skill[];
   customLinks: CustomLink[];
 }
@@ -54,6 +73,7 @@ interface ResumeContextType {
   resumeData: ResumeData;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  loadResumeData: (data: ResumeData) => void;
   updatePersonalInfo: (info: Partial<PersonalInfo>) => void;
   addEducation: () => void;
   updateEducation: (id: string, info: Partial<Education>) => void;
@@ -61,6 +81,12 @@ interface ResumeContextType {
   addExperience: () => void;
   updateExperience: (id: string, info: Partial<Experience>) => void;
   removeExperience: (id: string) => void;
+  addProject: () => void;
+  updateProject: (id: string, info: Partial<Project>) => void;
+  removeProject: (id: string) => void;
+  addCertification: () => void;
+  updateCertification: (id: string, info: Partial<Certification>) => void;
+  removeCertification: (id: string) => void;
   addSkill: (name: string) => void;
   removeSkill: (id: string) => void;
   addCustomLink: () => void;
@@ -99,8 +125,27 @@ const defaultResumeData: ResumeData = {
       position: "Software Developer",
       startDate: "2023",
       endDate: "Present",
-      description: "Developed and maintained user-facing features using React and Node.js. Improved application performance by 20%.",
+      description: "Developed and maintained user-facing features using React and Node.js.\nImproved application performance by 20% through efficient data caching.\nCollaborated with cross-functional teams to deliver high-quality software.",
     },
+  ],
+  projects: [
+    {
+      id: uuidv4(),
+      name: "AI Resume Builder",
+      technologies: "React, Node.js, LaTeX",
+      startDate: "Jan 2024",
+      endDate: "Feb 2024",
+      description: "Built a full-stack application that generates ATS-friendly resumes.\nIntegrated Overleaf API for direct LaTeX PDF compilation.",
+      url: "github.com/rahulsharma/resume-builder"
+    }
+  ],
+  certifications: [
+    {
+      id: uuidv4(),
+      name: "AWS Certified Developer – Associate",
+      issuer: "Amazon Web Services",
+      date: "Aug 2023"
+    }
   ],
   skills: [
     { id: uuidv4(), name: "JavaScript / TypeScript" },
@@ -121,7 +166,6 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check system preference on load
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
@@ -135,6 +179,10 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } else {
       document.documentElement.classList.remove('dark');
     }
+  };
+
+  const loadResumeData = (data: ResumeData) => {
+    setResumeData(data);
   };
 
   const updatePersonalInfo = (info: Partial<PersonalInfo>) => {
@@ -192,6 +240,54 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
 
+  const addProject = () => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: [
+        ...prev.projects,
+        { id: uuidv4(), name: "", technologies: "", startDate: "", endDate: "", description: "", url: "" },
+      ],
+    }));
+  };
+
+  const updateProject = (id: string, info: Partial<Project>) => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: prev.projects.map((proj) => (proj.id === id ? { ...proj, ...info } : proj)),
+    }));
+  };
+
+  const removeProject = (id: string) => {
+    setResumeData((prev) => ({
+      ...prev,
+      projects: prev.projects.filter((proj) => proj.id !== id),
+    }));
+  };
+
+  const addCertification = () => {
+    setResumeData((prev) => ({
+      ...prev,
+      certifications: [
+        ...prev.certifications,
+        { id: uuidv4(), name: "", issuer: "", date: "" },
+      ],
+    }));
+  };
+
+  const updateCertification = (id: string, info: Partial<Certification>) => {
+    setResumeData((prev) => ({
+      ...prev,
+      certifications: prev.certifications.map((cert) => (cert.id === id ? { ...cert, ...info } : cert)),
+    }));
+  };
+
+  const removeCertification = (id: string) => {
+    setResumeData((prev) => ({
+      ...prev,
+      certifications: prev.certifications.filter((cert) => cert.id !== id),
+    }));
+  };
+
   const addSkill = (name: string) => {
     if (!name.trim()) return;
     setResumeData((prev) => ({
@@ -237,6 +333,7 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         resumeData,
         isDarkMode,
         toggleDarkMode,
+        loadResumeData,
         updatePersonalInfo,
         addEducation,
         updateEducation,
@@ -244,6 +341,12 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addExperience,
         updateExperience,
         removeExperience,
+        addProject,
+        updateProject,
+        removeProject,
+        addCertification,
+        updateCertification,
+        removeCertification,
         addSkill,
         removeSkill,
         addCustomLink,

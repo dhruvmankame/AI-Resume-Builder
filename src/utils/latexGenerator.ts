@@ -1,7 +1,7 @@
 import { ResumeData } from "@/context/ResumeContext";
 
 export const generateLatex = (data: ResumeData): string => {
-  const { personalInfo, education, experience, skills } = data;
+  const { personalInfo, education, experience, projects, certifications, skills } = data;
 
   const escapeLatex = (str: string) => {
     if (!str) return "";
@@ -22,6 +22,13 @@ export const generateLatex = (data: ResumeData): string => {
     ?.filter((link) => link.name && link.url)
     .map((link) => `\\href{${link.url}}{${escapeLatex(link.name)}}`)
     .join(" $|$ ") || "";
+
+  // Filter out empty entries
+  const validExperience = experience.filter(exp => exp.company?.trim() || exp.position?.trim());
+  const validEducation = education.filter(edu => edu.school?.trim() || edu.degree?.trim());
+  const validProjects = projects.filter(proj => proj.name?.trim());
+  const validCertifications = certifications.filter(cert => cert.name?.trim());
+  const validSkills = skills.filter(skill => skill.name?.trim());
 
   return `\\documentclass[a4paper,10.5pt]{article}
 
@@ -57,54 +64,92 @@ export const generateLatex = (data: ResumeData): string => {
 
 \\begin{center}
     \\textbf{\\Huge \\scshape ${escapeLatex(personalInfo.firstName)} ${escapeLatex(personalInfo.lastName)}} \\\\ \\vspace{1pt}
-    \\small ${escapeLatex(personalInfo.phone)} $|$ \\href{mailto:${personalInfo.email}}{${escapeLatex(personalInfo.email)}} $|$ 
-    ${personalInfo.linkedin ? `\\href{${personalInfo.linkedin}}{LinkedIn}` : ""} $|$
-    ${personalInfo.github ? `\\href{${personalInfo.github}}{GitHub}` : ""}
-    ${linksLatex ? `$|$ ${linksLatex}` : ""}
+    ${[
+      personalInfo.phone ? `\\small ${escapeLatex(personalInfo.phone)}` : "",
+      personalInfo.email ? `\\href{mailto:${personalInfo.email}}{${escapeLatex(personalInfo.email)}}` : "",
+      personalInfo.linkedin ? `\\href{${personalInfo.linkedin}}{LinkedIn}` : "",
+      personalInfo.github ? `\\href{${personalInfo.github}}{GitHub}` : "",
+      linksLatex ? linksLatex : ""
+    ].filter(Boolean).join(" $|$ ")}
 \\end{center}
 
-${personalInfo.objective ? `
+${personalInfo.objective?.trim() ? `
 \\section{Professional Summary}
 ${escapeLatex(personalInfo.objective)}
 ` : ""}
 
-${experience.length > 0 ? `
+${validExperience.length > 0 ? `
 \\section{Experience}
   \\begin{itemize}[leftmargin=0.15in, label={}]
-    ${experience.map(exp => `
+    ${validExperience.map(exp => `
     \\item
       \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
         \\textbf{${escapeLatex(exp.position)}} & ${escapeLatex(exp.startDate)} -- ${escapeLatex(exp.endDate)} \\\\
         \\textit{${escapeLatex(exp.company)}} \\\\
       \\end{tabular*}\\vspace{-5pt}
+      ${exp.description?.trim() ? `
       \\begin{itemize}
-        \\item ${escapeLatex(exp.description).replace(/\\n/g, '\\\\')}
+        ${exp.description.split('\\n').filter(line => line.trim()).map(line => `\\item ${escapeLatex(line)}`).join('\n        ')}
       \\end{itemize}
+      ` : ""}
     `).join('')}
   \\end{itemize}
 ` : ""}
 
-${education.length > 0 ? `
+${validProjects.length > 0 ? `
+\\section{Projects}
+  \\begin{itemize}[leftmargin=0.15in, label={}]
+    ${validProjects.map(proj => `
+    \\item
+      \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
+        \\textbf{${escapeLatex(proj.name)}} ${proj.technologies?.trim() ? `$|$ \\textit{\\small ${escapeLatex(proj.technologies)}}` : ""} & ${escapeLatex(proj.startDate)} -- ${escapeLatex(proj.endDate)} \\\\
+        ${proj.url?.trim() ? `\\textit{\\href{${proj.url}}{${escapeLatex(proj.url)}}} \\\\` : ""}
+      \\end{tabular*}\\vspace{-5pt}
+      ${proj.description?.trim() ? `
+      \\begin{itemize}
+        ${proj.description.split('\\n').filter(line => line.trim()).map(line => `\\item ${escapeLatex(line)}`).join('\n        ')}
+      \\end{itemize}
+      ` : ""}
+    `).join('')}
+  \\end{itemize}
+` : ""}
+
+${validEducation.length > 0 ? `
 \\section{Education}
   \\begin{itemize}[leftmargin=0.15in, label={}]
-    ${education.map(edu => `
+    ${validEducation.map(edu => `
     \\item
       \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
         \\textbf{${escapeLatex(edu.school)}} & ${escapeLatex(edu.startDate)} -- ${escapeLatex(edu.endDate)} \\\\
         \\textit{${escapeLatex(edu.degree)}} \\\\
       \\end{tabular*}\\vspace{-5pt}
+      ${edu.description?.trim() ? `
       \\begin{itemize}
-        \\item ${escapeLatex(edu.description).replace(/\\n/g, '\\\\')}
+        ${edu.description.split('\\n').filter(line => line.trim()).map(line => `\\item ${escapeLatex(line)}`).join('\n        ')}
       \\end{itemize}
+      ` : ""}
     `).join('')}
   \\end{itemize}
 ` : ""}
 
-${skills.length > 0 ? `
+${validCertifications.length > 0 ? `
+\\section{Certifications \\& Awards}
+  \\begin{itemize}[leftmargin=0.15in, label={}]
+    ${validCertifications.map(cert => `
+    \\item
+      \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
+        \\textbf{${escapeLatex(cert.name)}} & ${escapeLatex(cert.date)} \\\\
+        \\textit{${escapeLatex(cert.issuer)}} \\\\
+      \\end{tabular*}\\vspace{-5pt}
+    `).join('')}
+  \\end{itemize}
+` : ""}
+
+${validSkills.length > 0 ? `
 \\section{Technical Skills}
  \\begin{itemize}[leftmargin=0.15in, label={}]
     \\item{
-     \\textbf{Skills}{: ${skills.map(s => escapeLatex(s.name)).join(', ')}}
+     \\textbf{Skills}{: ${validSkills.map(s => escapeLatex(s.name)).join(', ')}}
     }
  \\end{itemize}
 ` : ""}
