@@ -48,4 +48,34 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/resume/download-pdf
+// @desc    Proxy LaTeX compilation to avoid CORS and provide custom filename
+// @access  Public (or Private if you prefer, keeping public for easier direct link if needed)
+router.post('/download-pdf', async (req, res) => {
+  const { latexCode, filename } = req.body;
+
+  if (!latexCode) {
+    return res.status(400).json({ msg: 'LaTeX code is required' });
+  }
+
+  try {
+    const compileUrl = `https://latexonline.cc/compile?text=${encodeURIComponent(latexCode)}`;
+    const response = await fetch(compileUrl);
+
+    if (!response.ok) {
+      throw new Error('LaTeX compilation failed');
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename || 'resume.pdf'}"`);
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error during PDF generation');
+  }
+});
+
 module.exports = router;

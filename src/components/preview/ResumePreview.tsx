@@ -23,16 +23,23 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
   }, [latexCode]);
 
   const handleDownloadPdf = async () => {
-    if (!pdfUrl) return;
     setIsDownloading(true);
     try {
-      const response = await fetch(pdfUrl);
+      const firstName = resumeData.personalInfo.firstName.trim();
+      const filename = firstName ? `${firstName}_resume.pdf` : 'resume.pdf';
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/resume/download-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latexCode, filename })
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      const firstName = resumeData.personalInfo.firstName.trim();
-      const filename = firstName ? `${firstName}_resume.pdf` : 'resume.pdf';
       a.download = filename;
       document.body.appendChild(a);
       a.click();
@@ -40,7 +47,7 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Download failed:", error);
-      alert("Failed to download PDF directly.");
+      alert("Failed to download PDF. Please try again.");
     } finally {
       setIsDownloading(false);
     }
