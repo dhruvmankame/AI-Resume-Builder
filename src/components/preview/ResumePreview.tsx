@@ -18,7 +18,7 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
     const handler = setTimeout(() => {
       setPdfUrl(`https://latexonline.cc/compile?text=${encodeURIComponent(latexCode)}`);
       setIsCompiling(false);
-    }, 2000);
+    }, 1000);
     return () => clearTimeout(handler);
   }, [latexCode]);
 

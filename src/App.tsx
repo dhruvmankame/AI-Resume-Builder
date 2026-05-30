@@ -71,7 +71,7 @@ export default function App() {
       } finally {
         setIsSaving(false);
       }
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [resumeData, user, isLoaded, isFetching]);
