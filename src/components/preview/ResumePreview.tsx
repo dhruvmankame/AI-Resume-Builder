@@ -31,7 +31,9 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = "resume.pdf";
+      const firstName = resumeData.personalInfo.firstName.trim();
+      const filename = firstName ? `${firstName}_resume.pdf` : 'resume.pdf';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
