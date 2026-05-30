@@ -70,17 +70,6 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
           >
             {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
           </button>
-
-          <form action="https://www.overleaf.com/docs" method="post" target="_blank" className="flex items-center">
-            <input type="hidden" name="snip" value={latexCode} />
-            <button 
-              type="submit"
-              className="text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
-              title="Open and edit directly in Overleaf"
-            >
-              <ExternalLink className="w-5 h-5" />
-            </button>
-          </form>
         </div>
       </div>
       

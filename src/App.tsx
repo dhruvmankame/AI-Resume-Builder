@@ -41,26 +41,30 @@ export default function App() {
     fetchResume();
   }, [user]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/resume`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-auth-token': localStorage.getItem('token') || ''
-        },
-        body: JSON.stringify(resumeData)
-      });
-      if (!res.ok) throw new Error('Failed to save');
-      // Optionally show a success toast
-    } catch (err) {
-      console.error(err);
-      alert('Failed to save resume');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // Debounced Auto-save to MongoDB
+  useEffect(() => {
+    if (!user || isFetching) return;
+
+    const timer = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/resume`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-auth-token': localStorage.getItem('token') || ''
+          },
+          body: JSON.stringify(resumeData)
+        });
+      } catch (err) {
+        console.error('Auto-save failed', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [resumeData, user, isFetching]);
 
   if (authLoading || isFetching) {
     return (
@@ -80,7 +84,7 @@ export default function App() {
       <div className="w-full md:w-1/2 lg:w-[45%] h-screen overflow-y-auto p-6 lg:p-10 border-r border-gray-200 dark:border-gray-800 custom-scrollbar relative">
         
         <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
@@ -88,16 +92,14 @@ export default function App() {
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
+            {isSaving && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Saving...
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium"
-            >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save
-            </button>
             <button
               onClick={logout}
               className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors text-sm font-medium"

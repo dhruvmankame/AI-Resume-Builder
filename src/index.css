@@ -1,2 +1,50 @@
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
+
+@layer utilities {
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .animate-shake {
+    animation: shake 0.2s ease-in-out 0s 2;
+  }
+}
+
+/* Auth Page Entry Animations */
+.animate-in {
+  animation-duration: 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.fade-in {
+  opacity: 0;
+  animation-name: fadeIn;
+}
+
+.slide-in-from-top {
+  transform: translateY(-20px);
+  animation-name: slideInTop;
+}
+
+.slide-in-from-right {
+  transform: translateX(20px);
+  animation-name: slideInRight;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInTop {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
