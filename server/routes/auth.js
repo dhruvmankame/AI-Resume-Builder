@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const Resume = require('../models/Resume');
 
 // @route   POST api/auth/register
 // @desc    Register user
@@ -31,7 +32,7 @@ router.post('/register', async (req, res) => {
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
       if (err) throw err;
-      res.json({ token, user: { id: user.id, email: user.email } });
+      res.json({ token, user: { id: user.id, email: user.email }, resume: null });
     });
   } catch (err) {
     console.error(err.message);
@@ -62,9 +63,15 @@ router.post('/login', async (req, res) => {
       user: { id: user.id }
     };
 
+    const resume = await Resume.findOne({ userId: user.id });
+
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
       if (err) throw err;
-      res.json({ token, user: { id: user.id, email: user.email } });
+      res.json({ 
+        token, 
+        user: { id: user.id, email: user.email }, 
+        resume: resume ? resume.resumeData : null 
+      });
     });
   } catch (err) {
     console.error(err.message);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -9,6 +9,21 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Pre-warm the backend server (wake up Render free tier)
+  useEffect(() => {
+    const prewarm = async () => {
+      try {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/auth/me`, {
+          method: 'GET',
+          headers: { 'x-auth-token': 'prewarm' }
+        });
+      } catch (e) {
+        // Ignore errors, we just want to trigger a hit to wake the server up
+      }
+    };
+    prewarm();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +47,7 @@ export default function AuthPage() {
         throw new Error(data.msg || 'Authentication failed');
       }
 
-      login(data.token, data.user);
+      login(data.token, data.user, data.resume);
     } catch (err: any) {
       setError(err.message);
     } finally {

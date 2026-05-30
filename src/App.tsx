@@ -27,6 +27,17 @@ export default function App() {
         resetToEmpty(); // Clear data when logged out
         return;
       }
+
+      // Optimization: If we just logged in, check for temp_resume bundled in Auth
+      const tempResume = localStorage.getItem('temp_resume');
+      if (tempResume) {
+        loadResumeData(JSON.parse(tempResume));
+        localStorage.removeItem('temp_resume');
+        setIsFetching(false);
+        setIsLoaded(true);
+        return;
+      }
+
       setIsFetching(true);
       try {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/resume`, {

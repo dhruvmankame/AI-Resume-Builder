@@ -30,7 +30,6 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
         const blob = await response.blob();
         const newObjectURL = URL.createObjectURL(blob);
         
-        // Cleanup old URL to prevent memory leaks
         if (currentObjectURL) URL.revokeObjectURL(currentObjectURL);
         
         currentObjectURL = newObjectURL;
@@ -42,7 +41,13 @@ const ResumePreview = forwardRef<HTMLDivElement, any>((_, ref) => {
       }
     };
 
-    // Debounce to prevent flooding the server (1.5s is the sweet spot)
+    // Optimization: Skip debounce if it's the very first load
+    if (!pdfUrl) {
+      compilePdf();
+      return;
+    }
+
+    // Debounce for subsequent changes
     const timer = setTimeout(compilePdf, 1500);
 
     return () => {
