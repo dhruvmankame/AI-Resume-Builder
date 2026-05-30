@@ -18,9 +18,18 @@ export const generateLatex = (data: ResumeData): string => {
       .replace(/\^/g, "\\textasciicircum{}");
   };
 
+  const ensureProtocol = (url: string) => {
+    if (!url) return "";
+    const trimmed = url.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("mailto:")) {
+      return trimmed;
+    }
+    return `https://${trimmed}`;
+  };
+
   const linksLatex = data.customLinks
     ?.filter((link) => link.name && link.url)
-    .map((link) => `\\href{${link.url}}{${escapeLatex(link.name)}}`)
+    .map((link) => `\\href{${ensureProtocol(link.url)}}{${escapeLatex(link.name)}}`)
     .join(" $|$ ") || "";
 
   // Filter out empty entries
@@ -67,8 +76,8 @@ export const generateLatex = (data: ResumeData): string => {
     ${[
       personalInfo.phone ? `\\small ${escapeLatex(personalInfo.phone)}` : "",
       personalInfo.email ? `\\href{mailto:${personalInfo.email}}{${escapeLatex(personalInfo.email)}}` : "",
-      personalInfo.linkedin ? `\\href{${personalInfo.linkedin}}{LinkedIn}` : "",
-      personalInfo.github ? `\\href{${personalInfo.github}}{GitHub}` : "",
+      personalInfo.linkedin ? `\\href{${ensureProtocol(personalInfo.linkedin)}}{LinkedIn}` : "",
+      personalInfo.github ? `\\href{${ensureProtocol(personalInfo.github)}}{GitHub}` : "",
       linksLatex ? linksLatex : ""
     ].filter(Boolean).join(" $|$ ")}
 \\end{center}
@@ -103,7 +112,7 @@ ${validProjects.length > 0 ? `
     \\item
       \\begin{tabular*}{0.97\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
         \\textbf{${escapeLatex(proj.name)}} ${proj.technologies?.trim() ? `$|$ \\textit{\\small ${escapeLatex(proj.technologies)}}` : ""} & ${escapeLatex(proj.startDate)} -- ${escapeLatex(proj.endDate)} \\\\
-        ${proj.url?.trim() ? `\\textit{\\href{${proj.url}}{${escapeLatex(proj.url)}}} \\\\` : ""}
+        ${proj.url?.trim() ? `\\textit{\\href{${ensureProtocol(proj.url)}}{${escapeLatex(proj.url)}}} \\\\` : ""}
       \\end{tabular*}\\vspace{-5pt}
       ${proj.description?.trim() ? `
       \\begin{itemize}
