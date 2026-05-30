@@ -13,7 +13,7 @@ import { Moon, Sun, LogOut, Save, Loader2 } from "lucide-react";
 
 export default function App() {
   const componentRef = useRef<HTMLDivElement>(null);
-  const { isDarkMode, toggleDarkMode, resumeData, loadResumeData } = useResume();
+  const { isDarkMode, toggleDarkMode, resumeData, loadResumeData, resetToTemplate, resetToEmpty } = useResume();
   const { user, logout, loading: authLoading } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -23,6 +23,8 @@ export default function App() {
     const fetchResume = async () => {
       if (!user) {
         setIsFetching(false);
+        setIsLoaded(false);
+        resetToEmpty(); // Clear data when logged out
         return;
       }
       setIsFetching(true);
@@ -35,6 +37,9 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           loadResumeData(data);
+        } else if (res.status === 404) {
+          // New user - load the professional template
+          resetToTemplate();
         }
       } catch (err) {
         console.error('Failed to fetch resume', err);

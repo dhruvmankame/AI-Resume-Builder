@@ -74,6 +74,8 @@ interface ResumeContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   loadResumeData: (data: ResumeData) => void;
+  resetToTemplate: () => void;
+  resetToEmpty: () => void;
   updatePersonalInfo: (info: Partial<PersonalInfo>) => void;
   addEducation: () => void;
   updateEducation: (id: string, info: Partial<Education>) => void;
@@ -106,7 +108,60 @@ const defaultPersonalInfo: PersonalInfo = {
   title: "Software Engineer",
 };
 
-const emptyResumeData: ResumeData = {
+export const templateResumeData: ResumeData = {
+  personalInfo: defaultPersonalInfo,
+  education: [
+    {
+      id: uuidv4(),
+      school: "Indian Institute of Technology (IIT)",
+      degree: "B.Tech in Computer Science and Engineering",
+      startDate: "2019",
+      endDate: "2023",
+      description: "Graduated with First Class Honors. Coursework included Data Structures, Algorithms, and Distributed Systems.",
+    },
+  ],
+  experience: [
+    {
+      id: uuidv4(),
+      company: "Tech Mahindra",
+      position: "Software Developer",
+      startDate: "2023",
+      endDate: "Present",
+      description: "Developed and maintained user-facing features using React and Node.js.\nImproved application performance by 20% through efficient data caching.\nCollaborated with cross-functional teams to deliver high-quality software.",
+    },
+  ],
+  projects: [
+    {
+      id: uuidv4(),
+      name: "AI Resume Builder",
+      technologies: "React, Node.js, LaTeX",
+      startDate: "Jan 2024",
+      endDate: "Feb 2024",
+      description: "Built a full-stack application that generates ATS-friendly resumes.\nIntegrated Overleaf API for direct LaTeX PDF compilation.",
+      url: "github.com/rahulsharma/resume-builder"
+    }
+  ],
+  certifications: [
+    {
+      id: uuidv4(),
+      name: "AWS Certified Developer – Associate",
+      issuer: "Amazon Web Services",
+      date: "Aug 2023"
+    }
+  ],
+  skills: [
+    { id: uuidv4(), name: "JavaScript / TypeScript" },
+    { id: uuidv4(), name: "React.js" },
+    { id: uuidv4(), name: "Node.js" },
+    { id: uuidv4(), name: "MongoDB" },
+    { id: uuidv4(), name: "Git & CI/CD" },
+  ],
+  customLinks: [
+    { id: uuidv4(), name: "Portfolio", url: "https://rahulsharma.dev" }
+  ]
+};
+
+export const emptyResumeData: ResumeData = {
   personalInfo: {
     firstName: "",
     lastName: "",
@@ -150,6 +205,14 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const loadResumeData = (data: ResumeData) => {
     setResumeData(data);
+  };
+
+  const resetToTemplate = () => {
+    setResumeData(templateResumeData);
+  };
+
+  const resetToEmpty = () => {
+    setResumeData(emptyResumeData);
   };
 
   const updatePersonalInfo = (info: Partial<PersonalInfo>) => {
@@ -301,6 +364,8 @@ export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isDarkMode,
         toggleDarkMode,
         loadResumeData,
+        resetToTemplate,
+        resetToEmpty,
         updatePersonalInfo,
         addEducation,
         updateEducation,
